@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 //pages route
 Route::get('/userLogin',[UserController::class,'LoginPage']);
 Route::get('/userRegistration',[UserController::class,'RegistrationPage']);
-Route::get('/sendOtp',[UserController::class,'SendOtpPage']);
+Route::get('/sendOTP',[UserController::class,'SendOtpPage']);
 Route::get('/verifyOtp',[UserController::class,'VerifyOTPPage']);
 Route::get('/resetPassword',[UserController::class,'ResetPasswordPage'])->middleware([TokenVerificationMiddleware::class]);
 

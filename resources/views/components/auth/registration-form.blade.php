@@ -27,6 +27,13 @@
                                 <label>Password</label>
                                 <input id="password" placeholder="User Password" class="form-control" type="password"/>
                             </div>
+                            <div class="col-md-4 p-2">
+                                <label>Role</label>
+                                <select id="role" class="form-control">
+                                    <option value="Candidate">Candidate</option>
+                                    <option value="Company">Company</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="row m-0 p-0">
                             <div class="col-md-4 p-2">
@@ -50,6 +57,7 @@
                 "email":document.getElementById('email').value,
                 "password":document.getElementById('password').value,
                 "mobile":document.getElementById('mobile').value,
+                "role":document.getElementById('role').value
             }
 
               showLoader();

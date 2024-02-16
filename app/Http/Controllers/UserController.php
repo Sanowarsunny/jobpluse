@@ -7,6 +7,7 @@ use App\Mail\OTPMail;
 use App\Models\User;
 use Exception;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -28,60 +29,77 @@ class UserController extends Controller
     function ResetPasswordPage():View{
         return view('pages.auth.reset-pass-page');
     }
-    function userRegistration(Request $request){
-       try{
-        // User::create([
-        //     'firstName'=>$request->input('firstName'),
-        //     'lastName'=>$request->input('lastName'),
-        //     'email'=>$request->input('email'),
-        //     'mobile'=>$request->input('mobile'),
-        //     'password'=>$request->input('password'),
+    public function userRegistration(Request $request)
+    {
 
-        // ]);
-        User::create($request->input());//for data input 'firstName'=>$request->input('firstName')
-        return response()->json([
-            'status'=>'Success',
-            'message'=>'User Registration successfully',
-        ],201);
-       }
-       catch(Exception $e){
-        return response()->json([
-            'status'=>"Failed",
-            //'message'=>$e->getMessage(),
-            'message'=>"Failed Register",
-
+        try {
+            $request->validate([
+                'firstName' => 'required|string|max:50',
+                'lastName' => 'required|string|max:50',
+                'email' => 'required|string|email|max:50|unique:users,email',
+                'mobile' => 'required|string|max:50',
+                'password' => 'required|string|min:3',
             ]);
-       }
-    }
 
-    function userLogin(Request $request){
-        try{
-            $user= User::where($request->input())->select('email','id')->first();
-            //return response()->json(['status'=>'success', 'message'=>$user]);
+            $hashedPassword = Hash::make($request->input('password'));
+            /*
+            The merge method in Laravel's Request class is used to merge additional 
+            input into the request's input data. It's commonly used to add or override values 
+            in the request data before further processing.This line is replacing the original 'password' value 
+            in the request data with the hashed password. It ensures that the hashed password 
+            is used when creating the User instance in the User::create($request->input()) line.
+            */
+            $request->merge(['password' => $hashedPassword]);
 
-            $userEmail=$user->email;
-            //return response()->json(['status'=>'success', 'message'=>$userID]);
-
-            if($userEmail>0){
-                $token=JWTToken::CreateToken($request->input('email'),$user->id);
-                return response()
-                        ->json(
-                            ['status'=>'success', 
-                            'message'=>"Login Success",
-                            'token'=>$token
-                        ],200)
-                        ->cookie('Log_token',$token,time()+60*60);
-            }else {
-                return response()->json(['status' => 'fail', 
-                'message' => "No user found"]);
-            }
-        }catch(Exception $e){
+            User::create($request->input());
             return response()->json([
-                'status' => "Login Failed",
-                'message'=>"Unauthorized"
+                'status' => 'success',
+                'message' => 'User created successfully'
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'failed',
+                'message' => $e->getMessage(),
             ]);
         }
     }
+    
+
+
+
+    public function userLogin(Request $request)
+    {
+
+        try {
+            $request->validate([
+                'email' => 'required|string|email|max:50',
+                'password' => 'required|string|min:3'
+            ]);
+
+            $user = User::where('email', $request->input('email'))->first();
+
+            //dd($user);
+
+            if (!$user || !Hash::check($request->input('password'), $user->password)) {
+                return response()->json(['status' => 'failed', 'message' => 'Invalid User']);
+            }
+
+            $token = $user->createToken('authToken')->plainTextToken;
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Login Successful',
+                'token' => $token
+            ],200);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+
     function UserLogout(){
         return redirect('/userLogin')->cookie('Log_token','',-1);
     }
@@ -146,7 +164,7 @@ class UserController extends Controller
             $email = $request->header('email');
             $password = $request->input('password');
 
-            User::where('email','=',$email)->update(['password'=>$password]);
+            User::where('email','=',$email)->update(['password' => Hash::make($password)]);
                 
                 return response()
                         ->json(
