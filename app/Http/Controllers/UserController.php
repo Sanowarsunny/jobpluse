@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Helper\JWTToken;
+use App\Mail\OTPMail;
 use App\Models\User;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
